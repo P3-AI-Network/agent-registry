@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,6 +10,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id Int @id @default(autoincrement())
+model Agent {
+  id           String          @id @default(uuid())
+  did          String          @unique
+  name         String
+  description  String?
+  capabilities Json?
+  status       AgentStatus     @default(ACTIVE)
+  metadata     AgentMetadata[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([status])
+  @@map("agents")
+}
+
+model AgentMetadata {
+  id         String             @id @default(uuid())
+  agentId    String
+  agent      Agent              @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  key        String
+  value      String
+  visibility MetadataVisibility @default(PUBLIC)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([agentId, key])
+  @@index([agentId])
+  @@map("agent_metadata")
+}
+
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+}
+
+enum MetadataVisibility {
+  PUBLIC
+  PRIVATE
 }
