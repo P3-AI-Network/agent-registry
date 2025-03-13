@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { AgentsModule } from './agents/agents.module';
+import { MetadataModule } from './metadata/metadata.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { AgentsModule } from './agents/agents.module';
       envFilePath: '.env',
     }),
     AgentsModule,
+    MetadataModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
