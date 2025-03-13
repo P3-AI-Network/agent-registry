@@ -31,4 +31,12 @@ export class ConfigService {
   get logLevel(): string {
     return this.configService.get<string>('LOG_LEVEL', 'info');
   }
+
+  get issuerSettings(): { issuer_node_url: string; username: string; password: string } {
+    return {
+      issuer_node_url: this.configService.get<string>('ISSUER_NODE_URL')!,
+      username: this.configService.get<string>('ISSUER_USERNAME')!,
+      password: this.configService.get<string>('ISSUER_PASSWORD')!,
+    };
+  }
 }

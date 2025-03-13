@@ -10,6 +10,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            String  @id @default(uuid())
+  walletAddress String  @unique
+  name          String?
+  didIdentifier String  @unique
+  did           String
+
+  agents    Agent[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([walletAddress, didIdentifier])
+  @@index([didIdentifier])
+  @@map("users")
+}
+
 model Agent {
   id           String          @id @default(uuid())
   did          String          @unique
@@ -20,6 +36,9 @@ model Agent {
   metadata     AgentMetadata[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String
 
   @@index([status])
   @@map("agents")

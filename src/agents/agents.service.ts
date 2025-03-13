@@ -4,17 +4,34 @@ import { Agent, Prisma } from '@prisma/client';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AgentQueryDto } from './dto/agent-query.dto';
+import { ethers } from 'ethers';
 
 @Injectable()
 export class AgentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Create a new agent in the registry
    */
   async createAgent(createAgentDto: CreateAgentDto): Promise<Agent> {
+
+    const signersAddress = ethers.verifyMessage(createAgentDto.message, createAgentDto.signature);
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        walletAddress: signersAddress
+      }
+    })
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
     return this.prisma.agent.create({
-      data: createAgentDto,
+      data: {
+        ...createAgentDto,
+        ownerId: user.id
+      },
     });
   }
 

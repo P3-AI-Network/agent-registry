@@ -44,4 +44,20 @@ export class CreateAgentDto {
     default: AgentStatus.ACTIVE,
   })
   status?: AgentStatus;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ description: 'Wallet address of the user' })
+  walletAddress: string;
+
+  @IsString()
+  @IsNotEmpty() 
+  @ApiProperty({ description: 'Signature of the wallet address' })
+  signature: string;
+
+  @IsString()
+  @IsNotEmpty() 
+  @ApiProperty({ description: 'Origin message of the signature' })
+  message: string;
+
 }
