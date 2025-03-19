@@ -8,29 +8,34 @@ import { ethers } from 'ethers';
 
 @Injectable()
 export class AgentsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
    * Create a new agent in the registry
    */
   async createAgent(createAgentDto: CreateAgentDto): Promise<Agent> {
+    const signersAddress = ethers.verifyMessage(
+      createAgentDto.message,
+      createAgentDto.signature,
+    );
 
-    const signersAddress = ethers.verifyMessage(createAgentDto.message, createAgentDto.signature);
-
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: {
-        walletAddress: signersAddress
-      }
-    })
+        walletAddress: {
+          equals: signersAddress,
+          mode: 'insensitive',
+        },
+      },
+    });
 
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException('User not found');
     }
 
     return this.prisma.agent.create({
       data: {
         ...createAgentDto,
-        ownerId: user.id
+        ownerId: user.id,
       },
     });
   }
