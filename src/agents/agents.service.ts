@@ -34,7 +34,11 @@ export class AgentsService {
 
     return this.prisma.agent.create({
       data: {
-        ...createAgentDto,
+        did: createAgentDto.did,
+        name: createAgentDto.name,
+        description: createAgentDto.description,
+        capabilities: createAgentDto.capabilities,
+        status: createAgentDto.status,
         ownerId: user.id,
       },
     });
