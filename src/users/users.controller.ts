@@ -1,8 +1,10 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { CurrentUser } from 'src/decorators';
 
 @Controller('users')
 export class UsersController {
@@ -19,5 +21,16 @@ export class UsersController {
     @ApiResponse({status: 400, description: 'Invalid input'})
     async createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
         return this.usersService.createUser(createUserDto);
+    }
+
+
+    @Get()
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiSecurity('bearer')
+    async getMe(@CurrentUser() user) {
+
+        return this.usersService.getUser(user.userId)
+
     }
 }

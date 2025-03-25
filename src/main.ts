@@ -26,6 +26,7 @@ async function bootstrap() {
     .addTag('agents')
     .addTag('metadata')
     .addTag('search')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

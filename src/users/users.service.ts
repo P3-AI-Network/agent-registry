@@ -16,6 +16,28 @@ export class UsersService {
     private configService: ConfigService,
   ) {}
 
+  async getUser(userId: string): Promise<User> {
+
+    try {
+
+      const user = await this.prisma.user.findFirst({
+        where: {
+          id: userId
+        }
+      })
+
+      if (!user) {
+        throw new NotFoundException("User Not found")
+      }
+
+      return user;
+
+    } catch {
+      throw new NotFoundException("User Not found")
+    }
+
+  }
+
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
       const signersAddress = ethers.verifyMessage(
@@ -72,6 +94,7 @@ export class UsersService {
           name: createUserDto.name,
           did: JSON.stringify(responseJsn),
           didIdentifier: responseJsn.identifier,
+          seed: ""
         },
       });
     } catch (error) {

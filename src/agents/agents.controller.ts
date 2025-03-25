@@ -10,18 +10,21 @@ import {
   NotFoundException,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AgentQueryDto } from './dto/agent-query.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { Agent } from '@prisma/client';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { CurrentUser } from 'src/decorators';
 
 @ApiTags('agents')
 @Controller('agents')
 export class AgentsController {
-  constructor(private readonly agentsService: AgentsService) {}
+  constructor(private readonly agentsService: AgentsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Register a new agent' })
@@ -31,8 +34,26 @@ export class AgentsController {
     type: Object,
   })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async createAgent(@Body() createAgentDto: CreateAgentDto): Promise<Agent> {
-    return this.agentsService.createAgent(createAgentDto);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiSecurity('bearer')
+  async createAgent(@Body() createAgentDto: CreateAgentDto, @CurrentUser() user): Promise<Agent> {
+    return this.agentsService.createAgent(user.userId, createAgentDto);
+  }
+  
+
+  @Get("get-my-agents")
+  @ApiOperation({ summary: 'Get all agents of an User' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of agents',
+    type: [Object],
+  })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiSecurity('bearer')
+  async getMyAgents(@CurrentUser() user): Promise<Agent[]> {
+    return this.agentsService.getMyAgetns(user.userId);
   }
 
   @Get()

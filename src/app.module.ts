@@ -6,6 +6,7 @@ import { AgentsModule } from './agents/agents.module';
 import { MetadataModule } from './metadata/metadata.module';
 import { SearchModule } from './search/search.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UsersModule } from './users/users.module';
     MetadataModule,
     SearchModule,
     UsersModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [PrismaService],

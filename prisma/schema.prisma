@@ -17,6 +17,9 @@ model User {
   didIdentifier String  @unique
   did           String
 
+  seed String
+  connectionString String? // Connection string for agent issuer 
+
   agents    Agent[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -27,15 +30,20 @@ model User {
 }
 
 model Agent {
-  id           String          @id @default(uuid())
-  did          String          @unique
-  name         String
-  description  String?
-  capabilities Json?
-  status       AgentStatus     @default(ACTIVE)
-  metadata     AgentMetadata[]
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id            String  @id @default(uuid())
+  didIdentifier String  @unique
+  did           String  @unique
+  name          String
+  description   String?
+  capabilities  Json?
+  
+  seed String
+  connectionString String?
+
+  status    AgentStatus     @default(ACTIVE)
+  metadata  AgentMetadata[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   owner   User   @relation(fields: [ownerId], references: [id])
   ownerId String

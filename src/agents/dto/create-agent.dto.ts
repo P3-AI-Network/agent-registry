@@ -9,10 +9,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AgentStatus } from '@prisma/client';
 
 export class CreateAgentDto {
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ description: 'Decentralized Identifier (DID) of the agent' })
-  did: string;
 
   @IsString()
   @IsNotEmpty()
@@ -44,20 +40,5 @@ export class CreateAgentDto {
     default: AgentStatus.ACTIVE,
   })
   status?: AgentStatus;
-
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ description: 'Wallet address of the user' })
-  walletAddress: string;
-
-  @IsString()
-  @IsNotEmpty() 
-  @ApiProperty({ description: 'Signature of the wallet address' })
-  signature: string;
-
-  @IsString()
-  @IsNotEmpty() 
-  @ApiProperty({ description: 'Origin message of the signature' })
-  message: string;
 
 }

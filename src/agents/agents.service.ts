@@ -5,26 +5,21 @@ import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AgentQueryDto } from './dto/agent-query.dto';
 import { ethers } from 'ethers';
+import { createIdentity, generateSeed, seedToBase64 } from 'src/identity-wallet';
 
 @Injectable()
 export class AgentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Create a new agent in the registry
    */
-  async createAgent(createAgentDto: CreateAgentDto): Promise<Agent> {
-    const signersAddress = ethers.verifyMessage(
-      createAgentDto.message,
-      createAgentDto.signature,
-    );
+  async createAgent(userId: string, createAgentDto: CreateAgentDto): Promise<Agent> {
+
 
     const user = await this.prisma.user.findFirst({
       where: {
-        walletAddress: {
-          equals: signersAddress,
-          mode: 'insensitive',
-        },
+        id: userId
       },
     });
 
@@ -32,9 +27,14 @@ export class AgentsService {
       throw new NotFoundException('User not found');
     }
 
+    let newSeed = generateSeed();
+    let newIdentity = await createIdentity(newSeed);
+
     return this.prisma.agent.create({
       data: {
-        did: createAgentDto.did,
+        didIdentifier: newIdentity.identifier,
+        did: newIdentity.did,
+        seed: seedToBase64(newSeed),
         name: createAgentDto.name,
         description: createAgentDto.description,
         capabilities: createAgentDto.capabilities,
@@ -42,6 +42,19 @@ export class AgentsService {
         ownerId: user.id,
       },
     });
+  }
+
+  /**
+   * Fetch all agents created by the User
+   */
+  async getMyAgetns(userId: string): Promise<Agent[]> {
+
+    return await this.prisma.agent.findMany({
+      where: {
+        ownerId: userId
+      }
+    })
+
   }
 
   /**
