@@ -1,47 +1,163 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Agent, Prisma } from '@prisma/client';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AgentQueryDto } from './dto/agent-query.dto';
-import { ethers } from 'ethers';
 import { createIdentity, generateSeed, seedToBase64 } from 'src/identity-wallet';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AgentsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prismaService: PrismaService, private configService: ConfigService) { }
+
+
+  async createConnection(userDIDIdentifier: string, userDID: string) {
+
+    const username = this.configService.get('ISSUER_USERNAME');
+    const password = this.configService.get('ISSUER_PASSWORD');
+    const issuerUrl = this.configService.get('ISSUER_NODE_URL');
+    const issuerDIDIdentifier = this.configService.get('ISSUER_DID_IDENTIFIER');
+
+    const tokenBase64 = btoa(`${username}:${password}`);
+
+    await fetch(`${issuerUrl}/v2/identities/${issuerDIDIdentifier}/connections`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${tokenBase64}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "userDID": userDIDIdentifier,
+        "userDoc": JSON.parse(userDID),
+        "issuerDoc": JSON.parse(userDID)
+      }),
+    });
+
+  }
+
+  async getConnection(userDIDIdentifier: string) {
+
+    const username = this.configService.get('ISSUER_USERNAME');
+    const password = this.configService.get('ISSUER_PASSWORD');
+    const issuerUrl = this.configService.get('ISSUER_NODE_URL');
+
+    const tokenBase64 = btoa(`${username}:${password}`);
+
+
+    const issuerDIDIdentifier = this.configService.get('ISSUER_DID_IDENTIFIER');
+    const resp = await fetch(`${issuerUrl}/v2/identities/${issuerDIDIdentifier}/connections?query=${userDIDIdentifier}&page=1&max_results=1`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Basic ${tokenBase64}`,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (resp.status !== 200) {
+      throw new InternalServerErrorException("Issuer node Error")
+    }
+
+    const data = await resp.json();
+
+    return data.items[0].id
+  }
+
+
+  async issueCredential(agentDIDIdentifier: string) {
+
+    const username = this.configService.get('ISSUER_USERNAME');
+    const password = this.configService.get('ISSUER_PASSWORD');
+    const issuerUrl = this.configService.get('ISSUER_NODE_URL');
+    const userIdentitySchemaUrl = this.configService.get('USER_IDENTITY_SCHEMA_URL');
+    const tokenBase64 = btoa(`${username}:${password}`);
+
+    const oneYearFromNow = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+
+    const bodyData = {
+      credentialSchema: userIdentitySchemaUrl,
+      credentialSubject: {
+        id: agentDIDIdentifier,
+        owner: agentDIDIdentifier
+      },
+      expiration: oneYearFromNow,
+      proofs: ["Iden3SparseMerkleTreeProof", "BJJSignature2021"],
+      refreshService: null,
+      type: "Identity"
+    };
+
+    const issuerDIDIdentifier = this.configService.get('ISSUER_DID_IDENTIFIER');
+
+    const resp = await fetch(`${issuerUrl}/v2/identities/${issuerDIDIdentifier}/credentials`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${tokenBase64}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bodyData)
+    });
+
+    const data = await resp.json()
+    console.log(data)
+    console.log(resp.status)
+    if (resp.status !== 201) {
+      throw new InternalServerErrorException("Issuer node Error")
+    }
+
+  }
 
   /**
    * Create a new agent in the registry
    */
   async createAgent(userId: string, createAgentDto: CreateAgentDto): Promise<Agent> {
 
+    let agentId = "";
 
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: userId
-      },
-    });
+    try {
 
-    if (!user) {
-      throw new NotFoundException('User not found');
+      let newSeed = generateSeed();
+      let newIdentity = await createIdentity(newSeed);
+
+      // Start Prisma transaction
+      let agent = await this.prismaService.$transaction(async (tx) => {
+        const agent = await this.prismaService.agent.create({
+          data: {
+            didIdentifier: newIdentity.identifier,
+            did: newIdentity.did,
+            seed: seedToBase64(newSeed),
+            name: createAgentDto.name,
+            description: createAgentDto.description,
+            capabilities: createAgentDto.capabilities,
+            status: createAgentDto.status,
+            ownerId: userId,
+          },
+        });
+        
+        agentId = agent.id
+        await this.createConnection(agent.didIdentifier, agent.did);
+        const connectionId = await this.getConnection(agent.didIdentifier);
+
+        await tx.agent.update({
+          where: { didIdentifier: newIdentity.identifier },
+          data: { connectionString: connectionId }
+        });
+
+        return agent;
+      });
+
+      await this.issueCredential(agent.didIdentifier);
+
+      return agent;
+
+    } catch (err) {
+      // Rollback: If any external call fails, delete the user to maintain atomicity
+      console.log("id", agentId)
+      await this.prismaService.agent.delete({
+        where: { id: agentId }
+      });
+      throw new BadRequestException("Failed to create Agent identity: " + err.message);
     }
 
-    let newSeed = generateSeed();
-    let newIdentity = await createIdentity(newSeed);
-
-    return this.prisma.agent.create({
-      data: {
-        didIdentifier: newIdentity.identifier,
-        did: newIdentity.did,
-        seed: seedToBase64(newSeed),
-        name: createAgentDto.name,
-        description: createAgentDto.description,
-        capabilities: createAgentDto.capabilities,
-        status: createAgentDto.status,
-        ownerId: user.id,
-      },
-    });
   }
 
   /**
@@ -49,7 +165,7 @@ export class AgentsService {
    */
   async getMyAgetns(userId: string): Promise<Agent[]> {
 
-    return await this.prisma.agent.findMany({
+    return await this.prismaService.agent.findMany({
       where: {
         ownerId: userId
       }
@@ -96,7 +212,7 @@ export class AgentsService {
 
     // Execute the query with pagination
     const [data, total] = await Promise.all([
-      this.prisma.agent.findMany({
+      this.prismaService.agent.findMany({
         // where: {
         //   capabilities: {
         //     path: capabilities?.map((cap) => `$..${cap}`),
@@ -107,7 +223,7 @@ export class AgentsService {
         skip: offset,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.agent.count({ where }),
+      this.prismaService.agent.count({ where }),
     ]);
 
     return {
@@ -121,7 +237,7 @@ export class AgentsService {
    * Find one agent by ID
    */
   async findOne(id: string): Promise<Agent | null> {
-    return this.prisma.agent.findUnique({
+    return this.prismaService.agent.findUnique({
       where: { id },
     });
   }
@@ -130,7 +246,7 @@ export class AgentsService {
    * Find one agent by DID
    */
   async findByDid(did: string): Promise<Agent | null> {
-    return this.prisma.agent.findUnique({
+    return this.prismaService.agent.findUnique({
       where: { did },
     });
   }
@@ -143,7 +259,7 @@ export class AgentsService {
     updateAgentDto: UpdateAgentDto,
   ): Promise<Agent> {
     try {
-      return await this.prisma.agent.update({
+      return await this.prismaService.agent.update({
         where: { id },
         data: updateAgentDto,
       });
@@ -162,7 +278,7 @@ export class AgentsService {
    */
   async removeAgent(id: string): Promise<void> {
     try {
-      await this.prisma.agent.delete({
+      await this.prismaService.agent.delete({
         where: { id },
       });
     } catch (error) {

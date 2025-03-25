@@ -97,3 +97,13 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+# User Credential Schema
+ - Json Schema URL ```https://ipfs.io/ipfs/QmVwDQpPkiySK65iSFZxXpJgnXwupDkEGKj6RE1RXScHbF```
+ - Json LD Conext ```https://ipfs.io/ipfs/QmXSqcDtWptZtTkYxk4omoygrS4hPEw85i2KHscLZt1Twj```
+
+
+# Agent Credential Schema
+ - Json Schema URL ```https://ipfs.io/ipfs/QmNejzjdy7Ps4nocbjtnyoPMxy7QS5GinWdmGn8KQfMkb1```
+ - Json LD Conext ```https://ipfs.io/ipfs/QmSGHuqqA7QW7GtbDj7aRBWaGRFeomaUdTitbSbrV114px```

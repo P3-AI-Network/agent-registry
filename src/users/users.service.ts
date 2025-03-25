@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
@@ -16,7 +17,35 @@ export class UsersService {
     private configService: ConfigService,
   ) {}
 
-  async getUser(userId: string): Promise<User> {
+
+  async getCredentials(userDIDIdentifier: string) {
+  
+          const username = this.configService.get('ISSUER_USERNAME');
+          const password = this.configService.get('ISSUER_PASSWORD');
+          const issuerUrl = this.configService.get('ISSUER_NODE_URL');
+  
+          const tokenBase64 = btoa(`${username}:${password}`);
+  
+  
+          const issuerDIDIdentifier = this.configService.get('ISSUER_DID_IDENTIFIER');
+          const resp = await fetch(`${issuerUrl}/v2/identities/${issuerDIDIdentifier}/connections?query=${userDIDIdentifier}&page=1&max_results=1&credentials=true`, {
+              method: 'GET',
+              headers: {
+                  Authorization: `Basic ${tokenBase64}`,
+                  'Content-Type': 'application/json',
+              }
+          });
+  
+          if (resp.status !== 200) {
+              throw new InternalServerErrorException("Issuer node Error")
+          }
+  
+          const data = await resp.json();
+  
+          return data.items[0].credentials
+      }
+
+  async getUser(userId: string): Promise<any> {
 
     try {
 
@@ -25,12 +54,17 @@ export class UsersService {
           id: userId
         }
       })
-
+      
       if (!user) {
         throw new NotFoundException("User Not found")
       }
+      
+      const credentials = await this.getCredentials(user.didIdentifier);
 
-      return user;
+      return {
+        user,
+        credentials
+      };
 
     } catch {
       throw new NotFoundException("User Not found")
