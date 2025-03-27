@@ -80,7 +80,7 @@ export class AgentsController {
     type: Object,
   })
   @ApiResponse({ status: 404, description: 'Agent not found' })
-  async getAgent(@Param('id') id: string): Promise<Agent> {
+  async getAgent(@Param('id') id: string): Promise<{agent: Agent, credentials: any}> {
     const agent = await this.agentsService.findOne(id);
     if (!agent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
