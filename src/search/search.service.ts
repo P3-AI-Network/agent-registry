@@ -173,8 +173,6 @@ export class SearchService {
       LIMIT ${limit} OFFSET ${offset}
     `;
 
-    // Log the query for debugging
-    console.log('Executing query:', sql);
 
     // Execute the query
     const data = await this.prisma.$queryRawUnsafe<any[]>(sql);
@@ -224,9 +222,6 @@ export class SearchService {
     }
 
     countSql += `) as count_subquery`;
-
-    // Log the count query for debugging
-    console.log('Executing count query:', countSql);
 
     // Execute the count query
     const countResult = await this.prisma.$queryRawUnsafe<[{count: string}]>(countSql);
