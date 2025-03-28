@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: psiam_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: psiam
+      POSTGRES_PASSWORD: psiam_password
+      POSTGRES_DB: psiam_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

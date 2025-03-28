@@ -5,7 +5,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Agent } from '@prisma/client';
 
 @ApiTags('search')
-@Controller('agents/search')
+@Controller('search/agents')
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
