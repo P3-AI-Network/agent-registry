@@ -7,6 +7,7 @@ import { MetadataModule } from './metadata/metadata.module';
 import { SearchModule } from './search/search.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { SdkModule } from './Sdk/sdk.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { AuthModule } from './auth/auth.module';
     MetadataModule,
     SearchModule,
     UsersModule,
-    AuthModule
+    AuthModule,
+    SdkModule
   ],
   controllers: [AppController],
   providers: [PrismaService],

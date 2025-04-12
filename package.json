@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@0xpolygonid/js-sdk": "^1.27.1",
+    "@iden3/js-iden3-auth": "^1.6.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.1",
     "@nestjs/core": "^11.0.1",
