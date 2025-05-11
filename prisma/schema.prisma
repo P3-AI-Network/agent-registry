@@ -48,6 +48,9 @@ model Agent {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
+  mqttUri String?
+  inboxTopic String?
+
   @@index([status])
   @@map("agents")
 }

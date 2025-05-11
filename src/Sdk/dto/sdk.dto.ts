@@ -10,3 +10,14 @@ export class VerifyDocumentDto {
   })
   credDocumentJson?: string;
 }
+
+
+export class SearchAgentDto {
+  @IsArray()
+  @IsString({ each: true })
+  @ApiPropertyOptional({
+    description: 'User provided capabilities',
+    type: [String],
+  })
+  userProvidedCapabilities: string[];
+}

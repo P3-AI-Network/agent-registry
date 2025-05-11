@@ -3,8 +3,8 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "
 import { SdkService } from "./sdk.service";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { CurrentUser } from "src/decorators";
-import { Agent } from "http";
-import { VerifyDocumentDto } from "./dto/sdk.dto";
+import { SearchAgentDto, VerifyDocumentDto } from "./dto/sdk.dto";
+import { Agent } from "@prisma/client";
 
 
 
@@ -12,6 +12,23 @@ import { VerifyDocumentDto } from "./dto/sdk.dto";
 @Controller('sdk')
 export class SdkController {
     constructor(private readonly sdkService: SdkService) { }
+
+    @Post('search')
+    @ApiOperation({ summary: 'Search for agents' })
+    @ApiResponse({
+        status: 200,
+        description: 'The agents have been successfully found', 
+    })
+    @ApiResponse({ status: 400, description: 'Invalid input' })
+    async searchAgent(@Body() searchAgentDto: SearchAgentDto): Promise<{
+        id: string;
+        name: string;
+        description: string | null;
+        mqttUri: string | null;
+        inboxTopic: string | null;
+    }[]> {
+        return this.sdkService.searchAgents(searchAgentDto.userProvidedCapabilities);
+    }
 
     @Post()
     @ApiOperation({ summary: 'Register a new agent' })
