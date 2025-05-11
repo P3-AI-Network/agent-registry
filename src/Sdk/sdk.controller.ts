@@ -1,11 +1,7 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Post, Res } from "@nestjs/common";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { SdkService } from "./sdk.service";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
-import { CurrentUser } from "src/decorators";
 import { SearchAgentDto, VerifyDocumentDto } from "./dto/sdk.dto";
-import { Agent } from "@prisma/client";
-
 
 
 @ApiTags('sdk')
