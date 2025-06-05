@@ -35,5 +35,5 @@ jobs:
           application_name: 'p3-agent-registry'        # Replace with your EB app name
           environment_name: 'P3-agent-registry-env'       # Replace with your EB env name
           version_label: ${{ github.sha }}
-          region: us-east-1
+          region: ap-south-1
           deployment_package: deploy.zip
