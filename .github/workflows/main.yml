@@ -1,0 +1,39 @@
+name: CICD
+
+on: 
+  push:
+    branches: 
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22  # Use Node.js LTS version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build NestJS app
+        run: npm run build
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*' 'node_modules/*'
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: 'p3ai-agent-registry'        # Replace with your EB app name
+          environment_name: 'p3ai-agent-registry-env'       # Replace with your EB env name
+          version_label: ${{ github.sha }}
+          region: us-east-1
+          deployment_package: deploy.zip
