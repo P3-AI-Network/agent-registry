@@ -38,7 +38,7 @@ async function bootstrap() {
 
   // Start the server
   const port = configService.get<number>('PORT', 3000);
-  await app.listen(port);
+  await app.listen(port, '127.0.0.1');
 
   console.log(`P3AI registry service is running on: ${await app.getUrl()}`);
 }
