@@ -8,6 +8,7 @@ import { SearchModule } from './search/search.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SdkModule } from './Sdk/sdk.module';
+import { UtilsModule } from './utils/utils.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { SdkModule } from './Sdk/sdk.module';
     SearchModule,
     UsersModule,
     AuthModule,
-    SdkModule
+    SdkModule,
+    UtilsModule
   ],
   controllers: [AppController],
   providers: [PrismaService],

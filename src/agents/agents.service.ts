@@ -269,6 +269,13 @@ export class AgentsService {
 
     const agent = await this.prismaService.agent.findUnique({
       where: { id },
+      include: {
+        owner: {
+          select: {
+            walletAddress: true
+          }
+        }
+      }
     });
 
     if (!agent) {

@@ -17,7 +17,7 @@ model User {
   didIdentifier String  @unique
   did           String
 
-  seed String
+  seed             String
   connectionString String? // Connection string for agent issuer 
 
   agents    Agent[]
@@ -36,8 +36,8 @@ model Agent {
   name          String
   description   String?
   capabilities  Json?
-  
-  seed String
+
+  seed             String
   connectionString String?
 
   status    AgentStatus     @default(ACTIVE)
@@ -48,7 +48,7 @@ model Agent {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  mqttUri String?
+  mqttUri    String?
   inboxTopic String?
 
   @@index([status])
@@ -70,6 +70,18 @@ model AgentMetadata {
   @@map("agent_metadata")
 }
 
+model MailCollector {
+  id         String               @id @default(uuid())
+  email      String
+  subscribed Boolean              @default(true)
+  purpose    MailCollectorPurpose @default(NEWS_LETTER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, purpose])
+}
+
 enum AgentStatus {
   ACTIVE
   INACTIVE
@@ -79,4 +91,9 @@ enum AgentStatus {
 enum MetadataVisibility {
   PUBLIC
   PRIVATE
+}
+
+enum MailCollectorPurpose {
+  NEWS_LETTER
+  EARLY_ACCESS
 }
