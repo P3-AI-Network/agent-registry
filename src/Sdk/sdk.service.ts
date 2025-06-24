@@ -14,6 +14,7 @@ interface AgentSearchResult {
   inboxTopic: string | null;
   matchScore: number; // Similarity percentage (0.0 to 1.0)
   didIdentifier: string;
+  did: string
 }
 
 @Injectable()
@@ -76,7 +77,8 @@ export class SdkService {
           description: true,
           mqttUri: true,
           inboxTopic: true,
-          didIdentifier: true
+          didIdentifier: true,
+          did: true
         }
       });
 
@@ -99,7 +101,8 @@ export class SdkService {
         mqttUri: true,
         inboxTopic: true,
         capabilities: true,
-        didIdentifier: true
+        didIdentifier: true,
+        did: true
       }
     });
 
@@ -148,7 +151,8 @@ export class SdkService {
           mqttUri: agent.mqttUri,
           inboxTopic: agent.inboxTopic,
           matchScore: bestMatchScore,
-          didIdentifier: agent.didIdentifier
+          didIdentifier: agent.didIdentifier,
+          did: agent.did
         });
       }
     }
