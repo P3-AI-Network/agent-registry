@@ -35,7 +35,7 @@ export class SearchService {
     limit: number = 10,
     offset: number = 0
   ): Promise<{
-    data: Agent[];
+    data: any;
     count: number;
     total: number;
   }> {
@@ -79,12 +79,26 @@ export class SearchService {
         take: limit,
         skip: offset,
         orderBy: { createdAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          didIdentifier: true,
+          did: true,
+          name: true,
+          description: true,
+          capabilities: true,
+          connectionString: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          ownerId: true,
+          mqttUri: true,
+          inboxTopic: true,
           metadata: {
             where: {
               visibility: 'PUBLIC',
             },
           },
+          owner: true,
         },
       }),
       this.prisma.agent.count({ where }),
@@ -149,11 +163,23 @@ export class SearchService {
       )`;
     }
 
-    // Close the CTE and add the main query with pagination
+    // Close the CTE and add the main query with pagination - EXCLUDING seed field
     sql += `
       )
       SELECT 
-        a.*,
+        a.id,
+        a."didIdentifier",
+        a.did,
+        a.name,
+        a.description,
+        a.capabilities,
+        a."connectionString",
+        a.status,
+        a."createdAt",
+        a."updatedAt",
+        a."ownerId",
+        a."mqttUri",
+        a."inboxTopic",
         (
           SELECT jsonb_agg(json_build_object(
             'id', am.id,
@@ -172,7 +198,6 @@ export class SearchService {
       ORDER BY a."createdAt" DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
-
 
     // Execute the query
     const data = await this.prisma.$queryRawUnsafe<any[]>(sql);

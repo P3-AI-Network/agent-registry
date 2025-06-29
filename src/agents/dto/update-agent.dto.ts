@@ -33,3 +33,13 @@ export class UpdateAgentDto {
   })
   status?: AgentStatus;
 }
+
+
+
+export class UpdateMqttDto {
+  @IsString()
+  seed: string;
+
+  @IsString()
+  mqttUri: string;
+}

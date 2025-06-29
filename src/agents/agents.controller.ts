@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
-import { UpdateAgentDto } from './dto/update-agent.dto';
+import { UpdateAgentDto, UpdateMqttDto } from './dto/update-agent.dto';
 import { AgentQueryDto } from './dto/agent-query.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { Agent } from '@prisma/client';
@@ -40,7 +40,7 @@ export class AgentsController {
   async createAgent(@Body() createAgentDto: CreateAgentDto, @CurrentUser() user): Promise<Agent> {
     return this.agentsService.createAgent(user.userId, createAgentDto);
   }
-  
+
 
   @Get("get-my-agents")
   @ApiOperation({ summary: 'Get all agents of an User' })
@@ -80,7 +80,7 @@ export class AgentsController {
     type: Object,
   })
   @ApiResponse({ status: 404, description: 'Agent not found' })
-  async getAgent(@Param('id') id: string): Promise<{agent: Agent, credentials: any}> {
+  async getAgent(@Param('id') id: string): Promise<{ agent: Agent, credentials: any }> {
     const agent = await this.agentsService.findOne(id);
     if (!agent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
@@ -97,11 +97,15 @@ export class AgentsController {
     type: Object,
   })
   @ApiResponse({ status: 404, description: 'Agent not found' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiSecurity('bearer')
   async updateAgent(
     @Param('id') id: string,
     @Body() updateAgentDto: UpdateAgentDto,
+    @CurrentUser() user
   ): Promise<Agent> {
-    return this.agentsService.updateAgent(id, updateAgentDto);
+    return this.agentsService.updateAgent(id, updateAgentDto, user.userId);
   }
 
   @Delete(':id')
@@ -113,7 +117,21 @@ export class AgentsController {
     description: 'The agent has been successfully deleted',
   })
   @ApiResponse({ status: 404, description: 'Agent not found' })
-  async deleteAgent(@Param('id') id: string): Promise<void> {
-    return this.agentsService.removeAgent(id);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiSecurity('bearer')
+  async deleteAgent(@Param('id') id: string, @CurrentUser() user): Promise<void> {
+    return this.agentsService.removeAgent(id, user.userId);
+  }
+
+
+  @Post('/update-mqtt')
+  @ApiOperation({ summary: 'Update Mqtt Info' })
+  @ApiResponse({
+    status: 200,
+    description: 'The agent has been successfully Updated',
+  })
+  async updateMqtt(@Body() updateMqttDto: UpdateMqttDto): Promise<void> {
+    await this.agentsService.updateMqtt(updateMqttDto.seed, updateMqttDto.mqttUri);
   }
 }

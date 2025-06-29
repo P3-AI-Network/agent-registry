@@ -261,15 +261,23 @@ export class AgentsService {
     };
   }
 
-  /**
-   * Find one agent by ID
-   */
-  async findOne(id: string): Promise<{agent: Agent, credentials: any} | null> {
-
-
+  async findOne(id: string): Promise<{ agent: any, credentials: any } | null> {
     const agent = await this.prismaService.agent.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        didIdentifier: true,
+        did: true,
+        name: true,
+        description: true,
+        capabilities: true,
+        connectionString: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        ownerId: true,
+        mqttUri: true,
+        inboxTopic: true,
         owner: {
           select: {
             walletAddress: true
@@ -288,7 +296,6 @@ export class AgentsService {
       agent,
       credentials
     }
-
   }
 
   /**
@@ -306,10 +313,14 @@ export class AgentsService {
   async updateAgent(
     id: string,
     updateAgentDto: UpdateAgentDto,
+    userId: string
   ): Promise<Agent> {
     try {
       return await this.prismaService.agent.update({
-        where: { id },
+        where: {
+          id,
+          ownerId: userId
+        },
         data: updateAgentDto,
       });
     } catch (error) {
@@ -325,10 +336,13 @@ export class AgentsService {
   /**
    * Remove an agent from the registry
    */
-  async removeAgent(id: string): Promise<void> {
+  async removeAgent(id: string, userId: string): Promise<void> {
     try {
       await this.prismaService.agent.delete({
-        where: { id },
+        where: {
+          id,
+          ownerId: userId
+        },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -338,5 +352,28 @@ export class AgentsService {
       }
       throw error;
     }
+  }
+
+
+  async updateMqtt(seed: string, mqttUri: string): Promise<void> {
+
+    try {
+      await this.prismaService.agent.updateMany({
+        where: {
+          seed: seed
+        },
+        data: {
+          mqttUri: mqttUri
+        }
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new InternalServerErrorException(`Update Failed`);
+        }
+      }
+      throw error;
+    }
+
   }
 }
