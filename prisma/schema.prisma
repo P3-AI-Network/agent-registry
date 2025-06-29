@@ -37,7 +37,7 @@ model Agent {
   description   String?
   capabilities  Json?
 
-  seed             String
+  seed             String @unique
   connectionString String?
 
   status    AgentStatus     @default(ACTIVE)

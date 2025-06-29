@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Agent, Prisma } from '@prisma/client';
 import { CreateAgentDto } from './dto/create-agent.dto';
@@ -358,14 +358,26 @@ export class AgentsService {
   async updateMqtt(seed: string, mqttUri: string): Promise<void> {
 
     try {
-      await this.prismaService.agent.updateMany({
+      console.log(seed, mqttUri)
+      const agent = await this.prismaService.agent.findFirst({
         where: {
-          seed: seed
+          seed
+        }
+      });
+
+      if (!agent) {
+        throw new UnauthorizedException(`Forbidden`);
+      }
+
+      await this.prismaService.agent.update({
+        where: {
+          id: agent.id
         },
         data: {
           mqttUri: mqttUri
         }
       });
+
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
