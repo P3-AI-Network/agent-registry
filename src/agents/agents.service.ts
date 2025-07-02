@@ -261,7 +261,15 @@ export class AgentsService {
     };
   }
 
-  async findOne(id: string): Promise<{ agent: any, credentials: any } | null> {
+  async findOne(id: string, userId: number = -1): Promise<{ agent: any, credentials: any } | null> {
+
+    const isAgentOwner = await this.prismaService.agent.count({
+      where: {
+        id,
+        ownerId: userId.toString()
+      }
+    }) > 0;
+
     const agent = await this.prismaService.agent.findUnique({
       where: { id },
       select: {
@@ -278,6 +286,7 @@ export class AgentsService {
         ownerId: true,
         mqttUri: true,
         inboxTopic: true,
+        seed: isAgentOwner,
         owner: {
           select: {
             walletAddress: true
