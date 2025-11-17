@@ -20,6 +20,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiSecurit
 import { Agent } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CurrentUser } from 'src/decorators';
+import { JwtOrApiKeyGuard } from 'src/auth/combined-auth.guard';
 
 @ApiTags('agents')
 @Controller('agents')
@@ -34,13 +35,13 @@ export class AgentsController {
     type: Object,
   })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiSecurity('bearer')
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
+  @UseGuards(JwtOrApiKeyGuard)
+  // @ApiBearerAuth()
+  @ApiSecurity('api-key')
   async createAgent(@Body() createAgentDto: CreateAgentDto, @CurrentUser() user): Promise<Agent> {
     return this.agentsService.createAgent(user.userId, createAgentDto);
   }
-
 
   @Get("get-my-agents")
   @ApiOperation({ summary: 'Get all agents of an User' })

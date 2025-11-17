@@ -107,3 +107,6 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 # Agent Credential Schema
  - Json Schema URL ```https://ipfs.io/ipfs/QmNejzjdy7Ps4nocbjtnyoPMxy7QS5GinWdmGn8KQfMkb1```
  - Json LD Conext ```https://ipfs.io/ipfs/QmSGHuqqA7QW7GtbDj7aRBWaGRFeomaUdTitbSbrV114px```
+
+
+zynd_09b149a1b833e562ef7d1165b3628dfaa6e741c970fbc4123bff6949b0a30924

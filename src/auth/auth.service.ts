@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -173,6 +174,20 @@ export class AuthService {
         });
 
         return { access_token };
+    }
+
+    async generateApiKey(userId: string): Promise<string> {
+        const apiKey = "zynd_" + crypto.randomBytes(32).toString("hex");
+        const apiKeyHash = crypto.createHash("sha256").update(apiKey).digest("hex");
+        
+        await this.prismaService.aPIKey.create({
+            data: {
+                key: apiKeyHash,
+                owner: { connect: { id: userId } },
+            },
+        });
+
+        return apiKey;
     }
 
 

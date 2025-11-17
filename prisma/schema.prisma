@@ -21,12 +21,24 @@ model User {
   connectionString String? // Connection string for agent issuer 
 
   agents    Agent[]
+  apiKeys   APIKey[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([walletAddress, didIdentifier])
   @@index([didIdentifier])
   @@map("users")
+}
+
+model APIKey {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("api_keys")
 }
 
 model Agent {
@@ -37,7 +49,7 @@ model Agent {
   description   String?
   capabilities  Json?
 
-  seed             String @unique
+  seed             String  @unique
   connectionString String?
 
   status    AgentStatus     @default(ACTIVE)
@@ -50,6 +62,7 @@ model Agent {
 
   mqttUri    String?
   inboxTopic String?
+  n8nHttpWebhookUrl String?
 
   @@index([status])
   @@map("agents")

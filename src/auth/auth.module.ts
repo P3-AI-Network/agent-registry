@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ApiKeyStrategy } from './apikey.stratergy';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
       signOptions: {expiresIn: process.env.JWT_TOKEN_EXPIRY || "2000"}
     })
   ],
-  providers: [AuthService, JWTStrategy, PrismaService],
+  providers: [AuthService, JWTStrategy, PrismaService, ApiKeyStrategy],
   controllers: [AuthController],
   exports: [AuthService]
 })

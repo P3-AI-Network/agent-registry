@@ -27,6 +27,15 @@ async function bootstrap() {
     .addTag('metadata')
     .addTag('search')
     .addBearerAuth()
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'x-api-key',
+        in: 'header',
+        description: 'Enter your API key',
+      },
+      'api-key',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
