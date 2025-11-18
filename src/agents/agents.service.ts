@@ -6,6 +6,63 @@ import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AgentQueryDto } from './dto/agent-query.dto';
 import { createIdentity, generateSeed, seedToBase64 } from 'src/identity-wallet';
 import { ConfigService } from '@nestjs/config';
+import { z } from "zod";
+import { ChatOpenAI } from "@langchain/openai";
+import { StructuredOutputParser } from "@langchain/core/output_parsers";
+
+export const AgentProfileSchema = z.object({
+  agentName: z.string(),
+  description: z.string(),
+  capabilities: z.object({
+    ai: z.array(z.string()),
+    protocols: z.array(z.string()),
+    integration: z.array(z.string()),
+  })
+});
+export type AgentProfile = z.infer<typeof AgentProfileSchema>;
+
+
+
+export async function analyzeWorkflow(workflowJson: any): Promise<AgentProfile> {
+
+  const parser = StructuredOutputParser.fromZodSchema(AgentProfileSchema);
+  const formatInstructions = parser.getFormatInstructions();
+
+  const model = new ChatOpenAI({
+    modelName: "gpt-4o-mini",
+    temperature: 0.2,
+  }).withStructuredOutput(AgentProfileSchema);
+
+  const prompt = `
+    You are an AI system that analyzes n8n workflow JSON and generates an agent profile.
+
+    Follow the required JSON structure exactly.
+
+    Workflow JSON:
+    ${JSON.stringify(workflowJson, null, 2)}
+
+    Your tasks:
+    1. agentName → Use workflow.name
+    2. description → Summarize what the workflow does based on its nodes & connections (4–6 lines max).
+    3. capabilities → Infer capabilities:
+      - ai: NLP, agent-search, translation, classification, LLM features
+      - protocols: HTTP, triggers, REST, custom protocols
+      - integration: APIs, services, custom nodes
+
+    You MUST follow this strict JSON format:
+
+    ${formatInstructions}
+  `;
+  const result = await model.invoke(prompt);
+
+  return {
+    agentName: result.agentName,
+    description: result.description,
+    capabilities: result.capabilities
+  };
+}
+
+
 
 @Injectable()
 export class AgentsService {
@@ -137,9 +194,9 @@ export class AgentsService {
   /**
    * Create a new agent in the registry
    */
-  async createAgent(userId: string, createAgentDto: CreateAgentDto): Promise<Agent> {
+  async createAgent(userId: string, createAgentDto: CreateAgentDto, id: string | undefined = undefined): Promise<Agent> {
 
-    let agentId = "";
+    let agentId = id ? id : "";
 
     try {
 
@@ -150,6 +207,7 @@ export class AgentsService {
       let agent = await this.prismaService.$transaction(async (tx) => {
         const agent = await this.prismaService.agent.create({
           data: {
+            id,
             didIdentifier: newIdentity.identifier,
             did: newIdentity.did,
             seed: seedToBase64(newSeed),
@@ -184,6 +242,43 @@ export class AgentsService {
         where: { id: agentId }
       });
       throw new BadRequestException("Failed to create Agent identity: " + err.message);
+    }
+
+  }
+
+  /**
+   * Create a new N8N agent in the registry
+   */
+  async createN8NAgent(userId: string, createN8NAgentJson: any): Promise<Agent> {
+
+    try {
+
+      // Check if workflow already agent already created
+      const existingAgent = await this.prismaService.agent.findFirst({
+        where: {
+          id: createN8NAgentJson.id
+        }
+      });
+
+      if (existingAgent) {
+        throw new BadRequestException("Agent for this workflow already exists");
+      }
+
+      const analyzedProfile = await analyzeWorkflow(createN8NAgentJson);
+
+      const createAgentDto: CreateAgentDto = {
+        name: analyzedProfile.agentName,
+        description: analyzedProfile.description,
+        capabilities: analyzedProfile.capabilities,
+        status: "ACTIVE"
+      };
+
+      const agent = await this.createAgent(userId, createAgentDto, createN8NAgentJson.id);
+
+      return agent;
+
+    } catch (error) {
+      throw new BadRequestException("Failed to analyze N8N workflow: " + error.message);
     }
 
   }
