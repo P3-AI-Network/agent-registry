@@ -261,7 +261,7 @@ export class AgentsService {
       });
 
       if (existingAgent) {
-        throw new BadRequestException("Agent for this workflow already exists");
+        return existingAgent;
       }
 
       const analyzedProfile = await analyzeWorkflow(createN8NAgentJson);
@@ -274,7 +274,6 @@ export class AgentsService {
       };
 
       const agent = await this.createAgent(userId, createAgentDto, createN8NAgentJson.id);
-
       return agent;
 
     } catch (error) {
