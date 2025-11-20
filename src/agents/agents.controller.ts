@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
-import { UpdateAgentDto, UpdateMqttDto } from './dto/update-agent.dto';
+import { UpdateAgentDto, UpdateMqttDto, UpdateN8NWebhookDto } from './dto/update-agent.dto';
 import { AgentQueryDto } from './dto/agent-query.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { Agent } from '@prisma/client';
@@ -153,5 +153,18 @@ export class AgentsController {
   })
   async updateMqtt(@Body() updateMqttDto: UpdateMqttDto): Promise<void> {
     await this.agentsService.updateMqtt(updateMqttDto.seed, updateMqttDto.mqttUri);
+  }
+
+
+  @Post('/update-n8n-webhook')
+  @ApiOperation({ summary: 'Update N8N Webhook Url' })
+  @ApiResponse({
+    status: 200,
+    description: 'The agent has been successfully Updated',
+  })
+  @UseGuards(APIKeyAuthGuard)
+  @ApiSecurity('api-key')
+  async updateN8NWebhookUrl(@Body() updateN8NWebhookDto: UpdateN8NWebhookDto, @CurrentUser() user: any): Promise<void> {
+    await this.agentsService.updateN8NWebhookUrl(user.userId, updateN8NWebhookDto.n8nHttpWebhookUrl, updateN8NWebhookDto.agentId);
   }
 }

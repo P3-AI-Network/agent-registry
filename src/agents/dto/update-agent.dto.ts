@@ -43,3 +43,12 @@ export class UpdateMqttDto {
   @IsString()
   mqttUri: string;
 }
+
+
+export class UpdateN8NWebhookDto {
+  @IsString()
+  agentId: string;
+  
+  @IsString()
+  n8nHttpWebhookUrl: string;
+}

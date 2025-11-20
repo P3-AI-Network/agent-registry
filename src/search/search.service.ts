@@ -93,6 +93,7 @@ export class SearchService {
           ownerId: true,
           mqttUri: true,
           inboxTopic: true,
+          n8nHttpWebhookUrl: true,
           metadata: {
             where: {
               visibility: 'PUBLIC',
@@ -180,6 +181,7 @@ export class SearchService {
         a."ownerId",
         a."mqttUri",
         a."inboxTopic",
+        a."n8nHttpWebhookUrl",
         (
           SELECT jsonb_agg(json_build_object(
             'id', am.id,

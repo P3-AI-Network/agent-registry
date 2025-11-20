@@ -459,9 +459,7 @@ export class AgentsService {
 
 
   async updateMqtt(seed: string, mqttUri: string): Promise<void> {
-
     try {
-      console.log(seed, mqttUri)
       const agent = await this.prismaService.agent.findFirst({
         where: {
           seed
@@ -478,6 +476,39 @@ export class AgentsService {
         },
         data: {
           mqttUri: mqttUri
+        }
+      });
+
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new InternalServerErrorException(`Update Failed`);
+        }
+      }
+      throw error;
+    }
+  }
+
+
+  async updateN8NWebhookUrl(userId: string, n8nHttpWebhookUrl: string, agentId: string): Promise<void> {
+    try {
+      const agent = await this.prismaService.agent.findFirst({
+        where: {
+          ownerId: userId,
+          id: agentId
+        }
+      });
+
+      if (!agent) {
+        throw new UnauthorizedException(`Forbidden`);
+      }
+
+      await this.prismaService.agent.update({
+        where: {
+          id: agent.id
+        },
+        data: {
+          n8nHttpWebhookUrl: n8nHttpWebhookUrl
         }
       });
 
