@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Delete, Param, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -10,7 +10,7 @@ import { APIKeyAuthGuard } from './apikey-auth.guard';
 @Controller('auth')
 export class AuthController {
 
-    constructor (private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) { }
 
     @Post("login")
     @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
@@ -31,6 +31,22 @@ export class AuthController {
     @ApiSecurity('api-key')
     async checkApiKeyStatus(@CurrentUser() user) {
         return user;
+    }
+
+    @Get("api-keys")
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiSecurity('bearer')
+    async getApiKeys(@CurrentUser() user) {
+        return this.authService.getApiKeys(user.userId);
+    }
+
+    @Delete("api-keys/:id")
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiSecurity('bearer')
+    async deleteApiKey(@Param('id') id: string, @CurrentUser() user) {
+        return this.authService.deleteApiKey(user.userId, id);
     }
 
 }

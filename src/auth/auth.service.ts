@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -71,9 +71,9 @@ export class AuthService {
         const issuerUrl = this.configService.get('ISSUER_NODE_URL');
         const userIdentitySchemaUrl = this.configService.get('USER_IDENTITY_SCHEMA_URL');
         const tokenBase64 = btoa(`${username}:${password}`);
-        
+
         const oneYearFromNow = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
-        
+
         const bodyData = {
             credentialSchema: userIdentitySchemaUrl,
             credentialSubject: {
@@ -85,10 +85,10 @@ export class AuthService {
             refreshService: null,
             type: "Identity"
         };
-        
-        
+
+
         const issuerDIDIdentifier = this.configService.get('ISSUER_DID_IDENTIFIER');
-        
+
         const resp = await fetch(`${issuerUrl}/v2/identities/${issuerDIDIdentifier}/credentials`, {
             method: 'POST',
             headers: {
@@ -146,10 +146,10 @@ export class AuthService {
                         where: { id: createdUser.id },
                         data: { connectionString: connectionId }
                     });
-                    
+
                     return createdUser;
                 });
-                
+
                 await this.issueCredential(user.didIdentifier);
                 // Issue credential (external call, so wrap in try-catch)
             } catch (err) {
@@ -179,7 +179,7 @@ export class AuthService {
     async generateApiKey(userId: string): Promise<string> {
         const apiKey = "zynd_" + crypto.randomBytes(32).toString("hex");
         const apiKeyHash = crypto.createHash("sha256").update(apiKey).digest("hex");
-        
+
         await this.prismaService.aPIKey.create({
             data: {
                 key: apiKeyHash,
@@ -188,6 +188,51 @@ export class AuthService {
         });
 
         return apiKey;
+    }
+
+    async getApiKeys(userId: string): Promise<any[]> {
+        const apiKeys = await this.prismaService.aPIKey.findMany({
+            where: {
+                ownerId: userId
+            },
+            select: {
+                id: true,
+                key: true,
+                createdAt: true,
+                updatedAt: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        // Mask the API keys for security (show only first 10 and last 4 characters)
+        return apiKeys.map(apiKey => ({
+            id: apiKey.id,
+            key: `${apiKey.key.substring(0, 10)}...${apiKey.key.substring(apiKey.key.length - 4)}`,
+            createdAt: apiKey.createdAt,
+            updatedAt: apiKey.updatedAt
+        }));
+    }
+
+    async deleteApiKey(userId: string, keyId: string): Promise<void> {
+        // Verify ownership
+        const apiKey = await this.prismaService.aPIKey.findFirst({
+            where: {
+                id: keyId,
+                ownerId: userId
+            }
+        });
+
+        if (!apiKey) {
+            throw new NotFoundException("API Key not found or access denied");
+        }
+
+        await this.prismaService.aPIKey.delete({
+            where: {
+                id: keyId
+            }
+        });
     }
 
 
