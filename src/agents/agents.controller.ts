@@ -81,7 +81,7 @@ export class AgentsController {
     type: [Object],
   })
   async getAgents(@Query() query: AgentQueryDto): Promise<{
-    data: Agent[];
+    data: Omit<Agent, 'seed'>[];
     count: number;
     total: number;
   }> {

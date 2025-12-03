@@ -299,7 +299,7 @@ export class AgentsService {
    * Find all agents with pagination and filters
    */
   async findAll(query: AgentQueryDto): Promise<{
-    data: Agent[];
+    data: Omit<Agent, 'seed'>[];
     count: number;
     total: number;
   }> {
@@ -335,15 +335,26 @@ export class AgentsService {
     // Execute the query with pagination
     const [data, total] = await Promise.all([
       this.prismaService.agent.findMany({
-        // where: {
-        //   capabilities: {
-        //     path: capabilities?.map((cap) => `$..${cap}`),
-        //   },
-        // },
         where,
         take: limit,
         skip: offset,
         orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          didIdentifier: true,
+          did: true,
+          name: true,
+          description: true,
+          capabilities: true,
+          status: true,
+          ownerId: true,
+          createdAt: true,
+          updatedAt: true,
+          connectionString: true,
+          mqttUri: true,
+          inboxTopic: true,
+          n8nHttpWebhookUrl: true,
+        }
       }),
       this.prismaService.agent.count({ where }),
     ]);
