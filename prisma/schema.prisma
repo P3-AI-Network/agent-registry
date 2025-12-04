@@ -60,8 +60,10 @@ model Agent {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  mqttUri    String?
-  inboxTopic String?
+  embedding Unsupported("vector(1536)")? // OpenAI embeddings are 1536 dimensions
+
+  mqttUri           String?
+  inboxTopic        String?
   n8nHttpWebhookUrl String?
 
   @@index([status])

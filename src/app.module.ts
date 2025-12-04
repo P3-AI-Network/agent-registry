@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SdkModule } from './Sdk/sdk.module';
 import { UtilsModule } from './utils/utils.module';
+import { EmbeddingsModule } from './embeddings/embeddings.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UtilsModule } from './utils/utils.module';
       envFilePath: '.env',
     }),
     AgentsModule,
+    EmbeddingsModule,
     MetadataModule,
     SearchModule,
     UsersModule,
@@ -27,4 +29,4 @@ import { UtilsModule } from './utils/utils.module';
   controllers: [AppController],
   providers: [PrismaService],
 })
-export class AppModule {}
+export class AppModule { }

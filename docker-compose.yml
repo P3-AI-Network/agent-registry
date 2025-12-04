@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:latest
+    # Official pgvector image with PostgreSQL 16 (recommended & always up-to-date)
+    image: pgvector/pgvector:pg16
     container_name: psiam_postgres
     restart: always
     environment:
@@ -10,9 +11,10 @@ services:
       POSTGRES_PASSWORD: psiam_password
       POSTGRES_DB: psiam_db
     ports:
-      - "5434:5432"
+      - '5434:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    command: postgres -c shared_preload_libraries=vector # ensures vector is loaded
 
 volumes:
   postgres_data:
