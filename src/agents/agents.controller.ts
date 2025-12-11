@@ -20,7 +20,6 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiSecurit
 import { Agent } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CurrentUser } from 'src/decorators';
-import { JwtOrApiKeyGuard } from 'src/auth/combined-auth.guard';
 import { APIKeyAuthGuard } from 'src/auth/apikey-auth.guard';
 
 @ApiTags('agents')
@@ -37,7 +36,7 @@ export class AgentsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
-  @UseGuards(JwtOrApiKeyGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiSecurity('api-key')
   async createAgent(@Body() createAgentDto: CreateAgentDto, @CurrentUser() user): Promise<Agent> {
     return this.agentsService.createAgent(user.userId, createAgentDto);
